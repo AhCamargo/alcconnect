@@ -19,8 +19,8 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       JWT_SECRET: ${JWT_SECRET}
@@ -43,16 +43,16 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
     restart: unless-stopped
-    ports:
-      - "8080:80"
+    expose:
+      - "80"
 
   landing:
     build:
       context: .
       dockerfile: apps/landing/Dockerfile
     restart: unless-stopped
-    ports:
-      - "8081:80"
+    expose:
+      - "80"
 
 volumes:
   pgdata:
