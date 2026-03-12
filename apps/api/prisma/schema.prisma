@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  numbers  Number[]
+  webhooks Webhook[]
+
+  @@map("users")
+}
+
+model Number {
+  id          String   @id @default(uuid())
+  phoneNumber String   @map("phone_number")
+  ddd         String
+  status      String   @default("active") // active, suspended, cancelled
+  userId      String   @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("numbers")
+}
+
+model Webhook {
+  id        String   @id @default(uuid())
+  url       String
+  eventType String   @map("event_type") // sms_received, call_received
+  userId    String   @map("user_id")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events WebhookEvent[]
+
+  @@map("webhooks")
+}
+
+model WebhookEvent {
+  id        String   @id @default(uuid())
+  eventType String   @map("event_type")
+  payload   Json
+  status    String   @default("pending") // pending, delivered, failed
+  webhookId String   @map("webhook_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@map("webhook_events")
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  ddd       String
+  usage     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("leads")
+}

@@ -1,0 +1,645 @@
+{
+  "info": {
+    "name": "ALC Connect API",
+    "description": "Coleção completa de testes da API ALC Connect.\n\n**Setup:**\n1. Crie o environment \"ALC Connect Local\" com a variável `base_url` = `http://localhost:3000`\n2. Execute \"Register\" ou \"Login\" — o token será salvo automaticamente\n3. Todos os endpoints protegidos usam o token via `{{token}}`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "number_id", "value": "" },
+    { "key": "webhook_id", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] },
+            "auth": { "type": "noauth" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Service ok', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.status).to.eql('ok');",
+                  "  pm.expect(json.service).to.eql('alcconnect-api');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste ALC\",\n  \"email\": \"teste@alcconnect.com.br\",\n  \"password\": \"123456\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Retorna token e user', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.token).to.be.a('string');",
+                  "  pm.expect(json.user).to.have.property('id');",
+                  "  pm.expect(json.user).to.have.property('email');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Validação (sem nome)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teste@alcconnect.com.br\",\n  \"password\": \"123456\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Retorna erro', () => {",
+                  "  pm.expect(pm.response.json().error).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Email duplicado",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Teste ALC\",\n  \"email\": \"teste@alcconnect.com.br\",\n  \"password\": \"123456\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Erro de duplicata', () => {",
+                  "  pm.expect(pm.response.json().error).to.include('cadastrado');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teste@alcconnect.com.br\",\n  \"password\": \"123456\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna token', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.token).to.be.a('string');",
+                  "  pm.expect(json.user.email).to.eql('teste@alcconnect.com.br');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Credenciais inválidas",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teste@alcconnect.com.br\",\n  \"password\": \"senhaerrada\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Erro de credenciais', () => {",
+                  "  pm.expect(pm.response.json().error).to.include('inv');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me (perfil)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna user', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.user).to.have.property('id');",
+                  "  pm.expect(json.user).to.have.property('name');",
+                  "  pm.expect(json.user).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me - Sem token (401)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] },
+            "auth": { "type": "noauth" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Numbers",
+      "item": [
+        {
+          "name": "Buy Number",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/numbers/buy", "host": ["{{base_url}}"], "path": ["numbers", "buy"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ddd\": \"11\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Retorna número', () => {",
+                  "  const n = pm.response.json().number;",
+                  "  pm.expect(n).to.have.property('id');",
+                  "  pm.expect(n.phoneNumber).to.match(/^\\+5511/);",
+                  "  pm.expect(n.ddd).to.eql('11');",
+                  "  pm.expect(n.status).to.eql('active');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('number_id', pm.response.json().number.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buy Number - DDD inválido",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/numbers/buy", "host": ["{{base_url}}"], "path": ["numbers", "buy"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ddd\": \"1\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Erro de validação', () => {",
+                  "  pm.expect(pm.response.json().error).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Numbers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/numbers", "host": ["{{base_url}}"], "path": ["numbers"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => {",
+                  "  pm.expect(pm.response.json().numbers).to.be.an('array');",
+                  "  pm.expect(pm.response.json().numbers.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Number by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/numbers/{{number_id}}", "host": ["{{base_url}}"], "path": ["numbers", "{{number_id}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna número correto', () => {",
+                  "  const n = pm.response.json().number;",
+                  "  pm.expect(n.id).to.eql(pm.collectionVariables.get('number_id'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Number - Não encontrado",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/numbers/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["numbers", "00000000-0000-0000-0000-000000000000"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Number Events",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/numbers/{{number_id}}/events", "host": ["{{base_url}}"], "path": ["numbers", "{{number_id}}", "events"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array de eventos', () => {",
+                  "  pm.expect(pm.response.json().events).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Create Webhook (incoming_call)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/webhooks", "host": ["{{base_url}}"], "path": ["webhooks"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://webhook.site/test\",\n  \"eventType\": \"incoming_call\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Retorna webhook', () => {",
+                  "  const wh = pm.response.json().webhook;",
+                  "  pm.expect(wh).to.have.property('id');",
+                  "  pm.expect(wh.url).to.eql('https://webhook.site/test');",
+                  "  pm.expect(wh.eventType).to.eql('incoming_call');",
+                  "  pm.expect(wh.active).to.be.true;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('webhook_id', pm.response.json().webhook.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Webhook - URL inválida",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/webhooks", "host": ["{{base_url}}"], "path": ["webhooks"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"nao-e-url\",\n  \"eventType\": \"incoming_call\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Erro de validação', () => {",
+                  "  pm.expect(pm.response.json().error).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Webhook - eventType inválido",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/webhooks", "host": ["{{base_url}}"], "path": ["webhooks"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://webhook.site/test\",\n  \"eventType\": \"tipo_invalido\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Erro de eventType', () => {",
+                  "  pm.expect(pm.response.json().error).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Webhooks",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/webhooks", "host": ["{{base_url}}"], "path": ["webhooks"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => {",
+                  "  pm.expect(pm.response.json().webhooks).to.be.an('array');",
+                  "  pm.expect(pm.response.json().webhooks.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Webhook Events",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/webhooks/events", "host": ["{{base_url}}"], "path": ["webhooks", "events"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array de eventos', () => {",
+                  "  pm.expect(pm.response.json().events).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Webhook",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/webhooks/{{webhook_id}}", "host": ["{{base_url}}"], "path": ["webhooks", "{{webhook_id}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Mensagem de remoção', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('removido');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Webhook - Não encontrado",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/webhooks/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["webhooks", "00000000-0000-0000-0000-000000000000"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/lead", "host": ["{{base_url}}"], "path": ["api", "lead"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"João Silva\",\n  \"email\": \"joao@exemplo.com\",\n  \"ddd\": \"11\",\n  \"uso\": \"whatsapp\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Mensagem de sucesso', () => {",
+                  "  pm.expect(pm.response.json().message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Lead - Validação (email inválido)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/lead", "host": ["{{base_url}}"], "path": ["api", "lead"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"João\",\n  \"email\": \"nao-e-email\",\n  \"ddd\": \"11\",\n  \"uso\": \"whatsapp\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Retorna erro', () => {",
+                  "  pm.expect(pm.response.json().error).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Lead - Uso inválido",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/lead", "host": ["{{base_url}}"], "path": ["api", "lead"] },
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"João\",\n  \"email\": \"joao@exemplo.com\",\n  \"ddd\": \"11\",\n  \"uso\": \"invalido\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Erro de uso inválido', () => {",
+                  "  pm.expect(pm.response.json().error).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

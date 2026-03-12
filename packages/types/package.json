@@ -1,0 +1,6 @@
+{
+  "name": "@alcconnect/types",
+  "version": "1.0.0",
+  "description": "ALC Connect — Shared types and constants",
+  "main": "src/index.js"
+}
