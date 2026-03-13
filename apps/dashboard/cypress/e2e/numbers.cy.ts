@@ -10,7 +10,12 @@ describe("Números", () => {
     cy.request({
       method: "POST",
       url: "/auth/register",
-      body: testUser,
+      body: {
+        ...testUser,
+        document: `${uniqueId}`.slice(0, 11).padEnd(11, "0"),
+        phone: "11999990001",
+        whatsapp: "11999990001",
+      },
       failOnStatusCode: false,
     });
   });

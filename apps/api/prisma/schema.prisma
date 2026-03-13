@@ -12,6 +12,9 @@ model User {
   name      String
   email     String   @unique
   password  String
+  document  String   @unique // CPF ou CNPJ
+  phone     String
+  whatsapp  String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

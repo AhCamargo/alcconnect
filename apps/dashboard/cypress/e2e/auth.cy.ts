@@ -37,7 +37,10 @@ describe("Autenticação", () => {
   it("deve registrar um novo usuário com sucesso", () => {
     cy.visit("/register");
     cy.get('input[id="name"]').type(testUser.name);
+    cy.get('input[id="document"]').type("12345678901");
     cy.get('input[id="email"]').type(testUser.email);
+    cy.get('input[id="phone"]').type("11999990000");
+    cy.get('input[id="whatsapp"]').type("11999990000");
     cy.get('input[id="password"]').type(testUser.password);
     cy.get('button[type="submit"]').click();
 

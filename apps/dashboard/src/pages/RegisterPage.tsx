@@ -9,12 +9,19 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
+  const [document, setDocument] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  function onlyDigits(value: string) {
+    return value.replace(/\D/g, "");
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -23,7 +30,10 @@ export default function RegisterPage() {
     try {
       const { data } = await api.post("/auth/register", {
         name,
+        document: onlyDigits(document),
         email,
+        phone: onlyDigits(phone),
+        whatsapp: onlyDigits(whatsapp),
         password,
       });
       login(data.token, data.user);
@@ -53,11 +63,24 @@ export default function RegisterPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
+                <Label htmlFor="name">Nome completo</Label>
                 <Input
                   id="name"
+                  placeholder="Seu nome completo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="document">CPF ou CNPJ</Label>
+                <Input
+                  id="document"
+                  placeholder="Apenas números"
+                  value={document}
+                  onChange={(e) => setDocument(onlyDigits(e.target.value))}
+                  maxLength={14}
                   required
                 />
               </div>
@@ -67,8 +90,33 @@ export default function RegisterPage() {
                 <Input
                   id="email"
                   type="email"
+                  placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  placeholder="DDD + número (ex: 11999990000)"
+                  value={phone}
+                  onChange={(e) => setPhone(onlyDigits(e.target.value))}
+                  maxLength={11}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">WhatsApp</Label>
+                <Input
+                  id="whatsapp"
+                  placeholder="DDD + número (ex: 11999990000)"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(onlyDigits(e.target.value))}
+                  maxLength={11}
                   required
                 />
               </div>
@@ -78,6 +126,7 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Mínimo 6 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

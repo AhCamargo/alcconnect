@@ -1,9 +1,27 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
+  name: z.string().min(1, "Nome completo é obrigatório"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  document: z
+    .string()
+    .regex(
+      /^\d{11}$|^\d{14}$/,
+      "CPF (11 dígitos) ou CNPJ (14 dígitos) inválido",
+    ),
+  phone: z
+    .string()
+    .regex(
+      /^\d{10,11}$/,
+      "Telefone inválido. Informe DDD + número (10 ou 11 dígitos)",
+    ),
+  whatsapp: z
+    .string()
+    .regex(
+      /^\d{10,11}$/,
+      "WhatsApp inválido. Informe DDD + número (10 ou 11 dígitos)",
+    ),
 });
 
 export const loginSchema = z.object({

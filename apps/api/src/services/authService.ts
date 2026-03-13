@@ -3,19 +3,38 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../database/prisma";
 import { AppError } from "../errors/AppError";
 
-export async function registerUser(
-  name: string,
-  email: string,
-  password: string,
-) {
-  const exists = await prisma.user.findUnique({ where: { email } });
-  if (exists) {
+export async function registerUser(data: {
+  name: string;
+  email: string;
+  password: string;
+  document: string;
+  phone: string;
+  whatsapp: string;
+}) {
+  const existsEmail = await prisma.user.findUnique({
+    where: { email: data.email },
+  });
+  if (existsEmail) {
     throw new AppError(409, "Email já cadastrado.");
   }
 
-  const hashed = await bcrypt.hash(password, 10);
+  const existsDoc = await prisma.user.findUnique({
+    where: { document: data.document },
+  });
+  if (existsDoc) {
+    throw new AppError(409, "CPF/CNPJ já cadastrado.");
+  }
+
+  const hashed = await bcrypt.hash(data.password, 10);
   const user = await prisma.user.create({
-    data: { name, email, password: hashed },
+    data: {
+      name: data.name,
+      email: data.email,
+      password: hashed,
+      document: data.document,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+    },
   });
 
   const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET!, {

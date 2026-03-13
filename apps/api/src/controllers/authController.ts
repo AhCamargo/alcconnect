@@ -12,11 +12,7 @@ export async function register(req: AuthRequest, res: Response): Promise<void> {
   }
 
   try {
-    const result = await authService.registerUser(
-      parsed.data.name,
-      parsed.data.email,
-      parsed.data.password,
-    );
+    const result = await authService.registerUser(parsed.data);
     res.status(201).json(result);
   } catch (err: unknown) {
     const status = err instanceof AppError ? err.status : 500;
