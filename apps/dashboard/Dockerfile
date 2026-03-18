@@ -1,28 +1,21 @@
-FROM node:20-alpine AS build
-
-ENV CI=true
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM node:20-alpine3.21 AS build
 
 WORKDIR /app
 
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY apps/dashboard/package.json ./apps/dashboard/
-RUN pnpm install --frozen-lockfile --filter @alcconnect/dashboard
+COPY package.json ./
+RUN npm install
 
-WORKDIR /app/apps/dashboard
-
-COPY apps/dashboard/ .
+COPY . .
 
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-RUN pnpm build
+RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:1.27-alpine3.21
 
-COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 

@@ -4,6 +4,30 @@ import { createWebhookSchema } from "../validators/schemas";
 import * as webhookService from "../services/webhookService";
 import { AppError } from "../errors/AppError";
 
+export async function asaasWebhook(req: Request, res: Response): Promise<void> {
+  const parsed = asaasWebhookSchema.safeParse(req.body);
+  if (!parsed.success) {
+    console.error("[WEBHOOK][Asaas] Dados inválidos", parsed.error.errors);
+    res.status(400).json({ error: "Dados do webhook inválidos." });
+    return;
+  }
+
+  try {
+    await webhookService.handleAsaasWebhook(parsed.data);
+    res.status(200).json({ message: "Webhook processado com sucesso." });
+  } catch (err: any) {
+    console.error("[WEBHOOK][Asaas] Erro ao processar webhook", err);
+    res
+      .status(err.statusCode || 500)
+      .json({ error: err.message || "Erro ao processar webhook." });
+  }
+}
+import type { Response } from "express";
+import type { AuthRequest } from "../middlewares/auth";
+import { createWebhookSchema } from "../validators/schemas";
+import * as webhookService from "../services/webhookService";
+import { AppError } from "../errors/AppError";
+
 export async function createWebhook(
   req: AuthRequest,
   res: Response,

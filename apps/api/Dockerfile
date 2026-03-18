@@ -1,23 +1,25 @@
-FROM node:20-alpine
-
-ENV CI=true
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM node:20-alpine3.21 AS build
 
 WORKDIR /app
 
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY apps/api/package.json ./apps/api/
-RUN pnpm install --frozen-lockfile --filter @alcconnect/api
+COPY package.json ./
+RUN npm install
 
-WORKDIR /app/apps/api
+COPY prisma ./prisma
+RUN npx prisma generate
 
-COPY apps/api/tsconfig.json ./
-COPY apps/api/prisma ./prisma
-RUN pnpm db:generate
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
 
-COPY apps/api/src ./src
-RUN pnpm build
+FROM node:20-alpine3.21
+
+WORKDIR /app
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/package.json ./
 
 EXPOSE 3000
 

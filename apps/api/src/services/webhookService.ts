@@ -41,6 +41,53 @@ export async function listEvents(userId: string) {
     take: 50,
   });
 }
+export async function handleAsaasWebhook(payload: any) {
+  // Busca pagamento pelo asaasId
+  const payment = await prisma.payment.findUnique({
+    where: { asaasId: payload.payment.id },
+  });
+  if (!payment) {
+    console.error(
+      `[WEBHOOK][Asaas] Pagamento não encontrado: ${payload.payment.id}`,
+    );
+    throw new AppError(404, "Pagamento não encontrado.");
+  }
+
+  // Idempotência: não processa se já está confirmado
+  if (payment.status === "PAYMENT_CONFIRMED") {
+    console.log(`[WEBHOOK][Asaas] Pagamento já confirmado: ${payment.id}`);
+    return;
+  }
+
+  // Atualiza status do pagamento
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: {
+      status: payload.event,
+      webhookPayload: payload,
+      paidAt:
+        payload.event === "PAYMENT_CONFIRMED" ? new Date() : payment.paidAt,
+    },
+  });
+
+  // Ativa tenant se pagamento confirmado
+  if (payload.event === "PAYMENT_CONFIRMED") {
+    try {
+      await activateTenant(payment.tenantId);
+      console.log(`[WEBHOOK][Asaas] Tenant ativado: ${payment.tenantId}`);
+    } catch (err) {
+      console.error(
+        `[WEBHOOK][Asaas] Erro ao ativar tenant: ${payment.tenantId}`,
+        err,
+      );
+    }
+  }
+
+  // Log estruturado
+  console.log(
+    `[WEBHOOK][Asaas] Processado: paymentId=${payment.id} event=${payload.event}`,
+  );
+}
 
 export async function triggerWebhook(
   eventType: string,

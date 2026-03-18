@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-alcconnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-alcconnect}
+      POSTGRES_DB: ${POSTGRES_DB:-alcconnect}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-alcconnect} -d ${POSTGRES_DB:-alcconnect}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-alcconnect}:${POSTGRES_PASSWORD:-alcconnect}@postgres:5432/${POSTGRES_DB:-alcconnect}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-devsecret}
+      PORT: 3000
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      EMAIL_TO: ${EMAIL_TO:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

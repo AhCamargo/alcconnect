@@ -5,17 +5,21 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Phone,
+  Smartphone,
   Webhook,
   ScrollText,
   LogOut,
   BookOpen,
   PanelLeftClose,
   PanelLeftOpen,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/catalog", label: "Catálogo", icon: Phone },
+  { to: "/my-numbers", label: "Meus Números", icon: Smartphone },
   { to: "/numbers", label: "Números", icon: Phone },
   { to: "/webhooks", label: "Webhooks", icon: Webhook },
   { to: "/logs", label: "Logs", icon: ScrollText },
@@ -73,6 +77,25 @@ export default function Layout() {
               {!collapsed && item.label}
             </NavLink>
           ))}
+          {/* Seção Admin */}
+          {user?.role === "ADMIN" && (
+            <div className="mt-6">
+              <div className="text-xs text-gray-400 mb-2">Admin</div>
+              <NavLink
+                to="/admin/numbers"
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-purple-900 text-purple-400"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-purple-400",
+                  )
+                }
+              >
+                <Shield className="w-5 h-5" /> Números
+              </NavLink>
+            </div>
+          )}
         </nav>
         <div className="p-4 border-t border-gray-800">
           {!collapsed && (

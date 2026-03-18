@@ -1,0 +1,2 @@
+15/03/2026
+Último pedido: Integrar com o hub de pagamentos Asaas e finalizar todos os TODOs do ciclo (arquitetura, modelagem, endpoints, webhook, testes E2E, deploy).
