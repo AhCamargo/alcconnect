@@ -1,13 +1,9 @@
+// Tenant-related logic is currently not backed by a Prisma model.
+// These functions are kept as stubs to allow the project to compile and run.
+
 export async function activateTenant(tenantId: string) {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  if (!tenant) throw new Error("Tenant não encontrado.");
-  if (tenant.status === "ACTIVE") return;
-  await prisma.tenant.update({
-    where: { id: tenantId },
-    data: { status: "ACTIVE" },
-  });
+  console.warn("activateTenant is not implemented", { tenantId });
 }
-import { prisma } from "../database/prisma";
 
 export async function createTenant(data: {
   name: string;
@@ -15,13 +11,5 @@ export async function createTenant(data: {
   document: string;
   phone: string;
 }) {
-  // Verifica duplicidade
-  const exists = await prisma.tenant.findFirst({
-    where: {
-      OR: [{ email: data.email }, { document: data.document }],
-    },
-  });
-  if (exists) throw new Error("Cliente já existe.");
-
-  return prisma.tenant.create({ data });
+  throw new Error("createTenant is not implemented");
 }

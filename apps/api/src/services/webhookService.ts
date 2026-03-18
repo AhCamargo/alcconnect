@@ -41,6 +41,22 @@ export async function listEvents(userId: string) {
     take: 50,
   });
 }
+
+function mapAsaasEventToPaymentStatus(event: string) {
+  switch (event) {
+    case "PAYMENT_CONFIRMED":
+      return "CONFIRMED" as const;
+    case "PAYMENT_OVERDUE":
+      return "FAILED" as const;
+    case "SUBSCRIPTION_CANCELLED":
+      return "REFUNDED" as const;
+    case "PAYMENT_RECEIVED":
+      return "CONFIRMED" as const;
+    default:
+      return "PENDING" as const;
+  }
+}
+
 export async function handleAsaasWebhook(payload: any) {
   // Busca pagamento pelo asaasId
   const payment = await prisma.payment.findUnique({
@@ -54,34 +70,22 @@ export async function handleAsaasWebhook(payload: any) {
   }
 
   // Idempotência: não processa se já está confirmado
-  if (payment.status === "PAYMENT_CONFIRMED") {
+  if (payment.status === "CONFIRMED") {
     console.log(`[WEBHOOK][Asaas] Pagamento já confirmado: ${payment.id}`);
     return;
   }
 
   // Atualiza status do pagamento
+  const newStatus = mapAsaasEventToPaymentStatus(payload.event);
+
   await prisma.payment.update({
     where: { id: payment.id },
     data: {
-      status: payload.event,
+      status: newStatus,
       webhookPayload: payload,
-      paidAt:
-        payload.event === "PAYMENT_CONFIRMED" ? new Date() : payment.paidAt,
+      paidAt: newStatus === "CONFIRMED" ? new Date() : payment.paidAt,
     },
   });
-
-  // Ativa tenant se pagamento confirmado
-  if (payload.event === "PAYMENT_CONFIRMED") {
-    try {
-      await activateTenant(payment.tenantId);
-      console.log(`[WEBHOOK][Asaas] Tenant ativado: ${payment.tenantId}`);
-    } catch (err) {
-      console.error(
-        `[WEBHOOK][Asaas] Erro ao ativar tenant: ${payment.tenantId}`,
-        err,
-      );
-    }
-  }
 
   // Log estruturado
   console.log(

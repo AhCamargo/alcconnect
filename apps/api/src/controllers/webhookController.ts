@@ -1,6 +1,6 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import type { AuthRequest } from "../middlewares/auth";
-import { createWebhookSchema } from "../validators/schemas";
+import { asaasWebhookSchema, createWebhookSchema } from "../validators/schemas";
 import * as webhookService from "../services/webhookService";
 import { AppError } from "../errors/AppError";
 
@@ -22,11 +22,6 @@ export async function asaasWebhook(req: Request, res: Response): Promise<void> {
       .json({ error: err.message || "Erro ao processar webhook." });
   }
 }
-import type { Response } from "express";
-import type { AuthRequest } from "../middlewares/auth";
-import { createWebhookSchema } from "../validators/schemas";
-import * as webhookService from "../services/webhookService";
-import { AppError } from "../errors/AppError";
 
 export async function createWebhook(
   req: AuthRequest,
