@@ -15,8 +15,9 @@
     "onlyBuiltDependencies": [
       "@prisma/client",
       "@prisma/engines",
-      "prisma",
-      "esbuild"
+      "@scarf/scarf",
+      "esbuild",
+      "prisma"
     ],
     "ignoredBuiltDependencies": [
       "cypress"
