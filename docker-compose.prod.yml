@@ -69,6 +69,7 @@ services:
     # Domínio: https://alcconnect.com.br
     build:
       context: ./apps/landing
+      dockerfile: Dockerfile
     restart: unless-stopped
     expose:
       - "80"
