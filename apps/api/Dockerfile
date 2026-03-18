@@ -18,7 +18,7 @@ WORKDIR /app
 
 # Install runtime dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy build artifacts and Prisma schema
 COPY --from=build /app/dist ./dist
