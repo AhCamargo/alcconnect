@@ -7,7 +7,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY pnpm-lock.yaml ./
 COPY apps/api/package.json ./package.json
 COPY apps/api/tsconfig.json ./tsconfig.json
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Copia código fonte
 COPY apps/api/prisma ./prisma
