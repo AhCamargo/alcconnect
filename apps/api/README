@@ -1,0 +1,30 @@
+# API README
+
+Este diretório contém a aplicação de API do projeto.
+
+## Estrutura
+
+- `models/` - Modelos de dados
+- `routes/` - Rotas da API
+- `controllers/` - Lógica de controle
+- `tests/` - Testes automatizados
+
+## Como iniciar
+
+1. Instale as dependências:
+    ```
+    npm install
+    ```
+2. Execute o servidor:
+    ```
+    npm start
+    ```
+
+## Convenções
+
+- Siga o padrão RESTful para rotas.
+- Documente endpoints usando comentários JSDoc.
+
+## Contato
+
+Dúvidas? Entre em contato com o time de desenvolvimento.
