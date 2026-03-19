@@ -25,8 +25,6 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY pnpm-lock.yaml ./
 COPY apps/api/package.json ./package.json
-RUN pnpm install --prod --frozen-lockfile
-# Substitui frozen-lockfile por no-frozen-lockfile para evitar erro de lockfile
 RUN pnpm install --prod --no-frozen-lockfile
 
 # Copia artefatos de build e Prisma schema
