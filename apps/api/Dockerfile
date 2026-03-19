@@ -2,17 +2,18 @@ FROM node:20-alpine3.21 AS build
 
 WORKDIR /app
 
-# Install pnpm and dependencies
+# Instala pnpm e dependências
 RUN corepack enable && corepack prepare pnpm@latest --activate
-COPY ../../pnpm-lock.yaml ./
-COPY package.json tsconfig.json ./
+COPY pnpm-lock.yaml ./
+COPY apps/api/package.json ./package.json
+COPY apps/api/tsconfig.json ./tsconfig.json
 RUN pnpm install --frozen-lockfile
 
-# Copy source
-COPY prisma ./prisma
-COPY src ./src
+# Copia código fonte
+COPY apps/api/prisma ./prisma
+COPY apps/api/src ./src
 
-# Generate Prisma client and build
+# Gera Prisma Client e build
 RUN npx prisma generate
 RUN pnpm run build
 
@@ -20,13 +21,13 @@ FROM node:20-alpine3.21
 
 WORKDIR /app
 
-# Install pnpm and dependencies of production
+# Instala pnpm e dependências de produção
 RUN corepack enable && corepack prepare pnpm@latest --activate
-COPY ../../pnpm-lock.yaml ./
-COPY package.json ./
+COPY pnpm-lock.yaml ./
+COPY apps/api/package.json ./package.json
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy build artifacts and Prisma schema
+# Copia artefatos de build e Prisma schema
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 
