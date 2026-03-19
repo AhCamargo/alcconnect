@@ -2,9 +2,11 @@ FROM node:20-alpine3.21 AS build
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json package-lock.json tsconfig.json ./
-RUN npm ci
+# Install pnpm and dependencies
+RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY ../../pnpm-lock.yaml ./
+COPY package.json tsconfig.json ./
+RUN pnpm install --frozen-lockfile
 
 # Copy source
 COPY prisma ./prisma
@@ -12,15 +14,17 @@ COPY src ./src
 
 # Generate Prisma client and build
 RUN npx prisma generate
-RUN npm run build
+RUN pnpm run build
 
 FROM node:20-alpine3.21
 
 WORKDIR /app
 
-# Install only runtime deps
-COPY package.json package-lock.json ./
-RUN npm ci --only=production
+# Install pnpm and dependencies of production
+RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY ../../pnpm-lock.yaml ./
+COPY package.json ./
+RUN pnpm install --prod --frozen-lockfile
 
 # Copy build artifacts and Prisma schema
 COPY --from=build /app/dist ./dist
