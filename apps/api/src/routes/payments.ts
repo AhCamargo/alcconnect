@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createPayment } from "../controllers/paymentController";
 
-const router = Router();
+const router: Router = Router();
 
 router.post("/", createPayment);
 

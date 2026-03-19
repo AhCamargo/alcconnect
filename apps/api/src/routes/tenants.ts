@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createTenant } from "../controllers/tenantController";
 
-const router = Router();
+const router: Router = Router();
 
 router.post("/", createTenant);
 
