@@ -12,9 +12,11 @@ import { swaggerSpec } from "./swagger";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",")
-  : ["http://localhost:5173"];
+const allowedOrigins = [
+  "https://alcconnect.com.br",
+  "http://localhost:3000",
+  "http://localhost:5173",
+];
 
 app.use(
   cors({
