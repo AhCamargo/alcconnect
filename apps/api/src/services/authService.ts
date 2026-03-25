@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { prisma } from "../database/prisma";
+import prisma from "../database/prisma";
 import { AppError } from "../errors/AppError";
+import { randomUUID } from "crypto";
 
 export async function registerUser(data: {
   name: string;
@@ -10,7 +11,9 @@ export async function registerUser(data: {
   document: string;
   phone: string;
   whatsapp: string;
+  tenantId: string;
 }) {
+  console.log("[registerUser] dados recebidos:", data);
   const existsEmail = await prisma.user.findUnique({
     where: { email: data.email },
   });
@@ -34,6 +37,7 @@ export async function registerUser(data: {
       document: data.document,
       phone: data.phone,
       whatsapp: data.whatsapp,
+      tenantId: data.tenantId || randomUUID(),
     },
   });
 

@@ -1,82 +1,69 @@
-import { prisma } from "../database/prisma";
+import AppDataSource from "../database/data-source";
+import { PhoneNumber } from "../entities/PhoneNumber";
 import { AppError } from "../errors/AppError";
-import type { NumberType, NumberStatus, Prisma } from "@prisma/client";
 
 interface ListAvailableFilters {
   ddd?: string;
-  type?: NumberType;
+  type?: string;
   page: number;
   limit: number;
 }
 
 export async function listAvailable(filters: ListAvailableFilters) {
-  const where: Prisma.PhoneNumberWhereInput = {
+  const repo = AppDataSource.getRepository(PhoneNumber);
+
+  const qb = repo.createQueryBuilder("pn").where("pn.status = :status", {
     status: "AVAILABLE",
-    ...(filters.ddd && { ddd: filters.ddd }),
-    ...(filters.type && { type: filters.type }),
-  };
+  });
+  if (filters.ddd) qb.andWhere("pn.ddd = :ddd", { ddd: filters.ddd });
+  if (filters.type) qb.andWhere("pn.type = :type", { type: filters.type });
 
   const [data, total] = await Promise.all([
-    prisma.phoneNumber.findMany({
-      where,
-      select: {
-        id: true,
-        phoneNumber: true,
-        ddd: true,
-        region: true,
-        type: true,
-        monthlyPrice: true,
-        setupPrice: true,
-      },
-      orderBy: { createdAt: "desc" },
-      skip: (filters.page - 1) * filters.limit,
-      take: filters.limit,
-    }),
-    prisma.phoneNumber.count({ where }),
+    qb
+      .select([
+        "pn.id",
+        "pn.phoneNumber",
+        "pn.ddd",
+        "pn.region",
+        "pn.type",
+        "pn.monthlyPrice",
+        "pn.setupPrice",
+        "pn.createdAt",
+      ])
+      .orderBy("pn.createdAt", "DESC")
+      .skip((filters.page - 1) * filters.limit)
+      .take(filters.limit)
+      .getRawMany(),
+    qb.getCount(),
   ]);
 
   return { data, total, page: filters.page, limit: filters.limit };
 }
 
 export async function listMine(userId: string) {
-  return prisma.phoneNumber.findMany({
+  const repo = AppDataSource.getRepository(PhoneNumber);
+  return repo.find({
     where: { userId },
-    select: {
-      id: true,
-      phoneNumber: true,
-      ddd: true,
-      region: true,
-      type: true,
-      status: true,
-      monthlyPrice: true,
-      setupPrice: true,
-      activatedAt: true,
-      expiresAt: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
+    order: { createdAt: "DESC" },
+    select: [
+      "id",
+      "phoneNumber",
+      "ddd",
+      "region",
+      "type",
+      "status",
+      "monthlyPrice",
+      "setupPrice",
+      "activatedAt",
+      "expiresAt",
+      "createdAt",
+    ],
   });
 }
 
 export async function getById(id: string, userId: string) {
-  const phoneNumber = await prisma.phoneNumber.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      phoneNumber: true,
-      ddd: true,
-      region: true,
-      type: true,
-      status: true,
-      monthlyPrice: true,
-      setupPrice: true,
-      userId: true,
-      activatedAt: true,
-      expiresAt: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const repo = AppDataSource.getRepository(PhoneNumber);
+  const phoneNumber = await repo.findOne({ where: { id } });
 
   if (!phoneNumber) {
     throw new AppError(404, "Número não encontrado.");
@@ -90,19 +77,18 @@ export async function getById(id: string, userId: string) {
 }
 
 export async function listAll(filters: ListAvailableFilters) {
-  const where: Prisma.PhoneNumberWhereInput = {
-    ...(filters.ddd && { ddd: filters.ddd }),
-    ...(filters.type && { type: filters.type }),
-  };
+  const repo = AppDataSource.getRepository(PhoneNumber);
+  const qb = repo.createQueryBuilder("pn");
+  if (filters.ddd) qb.andWhere("pn.ddd = :ddd", { ddd: filters.ddd });
+  if (filters.type) qb.andWhere("pn.type = :type", { type: filters.type });
 
   const [data, total] = await Promise.all([
-    prisma.phoneNumber.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (filters.page - 1) * filters.limit,
-      take: filters.limit,
-    }),
-    prisma.phoneNumber.count({ where }),
+    qb
+      .orderBy("pn.createdAt", "DESC")
+      .skip((filters.page - 1) * filters.limit)
+      .take(filters.limit)
+      .getMany(),
+    qb.getCount(),
   ]);
 
   return { data, total, page: filters.page, limit: filters.limit };
@@ -117,25 +103,22 @@ export async function create(data: {
   setupPrice: number;
   providerRef?: string;
 }) {
-  const exists = await prisma.phoneNumber.findUnique({
-    where: { phoneNumber: data.phoneNumber },
-  });
-
+  const repo = AppDataSource.getRepository(PhoneNumber);
+  const exists = await repo.findOneBy({ phoneNumber: data.phoneNumber });
   if (exists) {
     throw new AppError(409, "Este número já está cadastrado.");
   }
 
-  return prisma.phoneNumber.create({
-    data: {
-      phoneNumber: data.phoneNumber,
-      ddd: data.ddd,
-      region: data.region,
-      type: data.type,
-      monthlyPrice: data.monthlyPrice,
-      setupPrice: data.setupPrice,
-      providerRef: data.providerRef,
-    },
+  const pn = repo.create({
+    phoneNumber: data.phoneNumber,
+    ddd: data.ddd,
+    region: data.region,
+    type: data.type as string,
+    monthlyPrice: String(data.monthlyPrice),
+    setupPrice: String(data.setupPrice),
+    providerRef: data.providerRef,
   });
+  return repo.save(pn);
 }
 
 export async function update(
@@ -151,40 +134,36 @@ export async function update(
     providerRef?: string;
   },
 ) {
-  const phoneNumber = await prisma.phoneNumber.findUnique({ where: { id } });
+  const repo = AppDataSource.getRepository(PhoneNumber);
+  const phoneNumber = await repo.findOne({ where: { id } });
 
   if (!phoneNumber) {
     throw new AppError(404, "Número não encontrado.");
   }
 
   if (data.phoneNumber && data.phoneNumber !== phoneNumber.phoneNumber) {
-    const exists = await prisma.phoneNumber.findUnique({
-      where: { phoneNumber: data.phoneNumber },
-    });
+    const exists = await repo.findOneBy({ phoneNumber: data.phoneNumber });
     if (exists) {
       throw new AppError(409, "Este número já está cadastrado.");
     }
   }
 
-  return prisma.phoneNumber.update({
-    where: { id },
-    data,
-  });
+  await repo.update(id, data as any);
+  return repo.findOne({ where: { id } });
 }
 
 export async function remove(id: string) {
-  const phoneNumber = await prisma.phoneNumber.findUnique({ where: { id } });
-
+  const repo = AppDataSource.getRepository(PhoneNumber);
+  const phoneNumber = await repo.findOne({ where: { id } });
   if (!phoneNumber) {
     throw new AppError(404, "Número não encontrado.");
   }
-
   if (phoneNumber.status !== "AVAILABLE") {
     throw new AppError(
       400,
       "Só é possível remover números com status AVAILABLE.",
     );
   }
-
-  return prisma.phoneNumber.delete({ where: { id } });
+  await repo.delete(id);
+  return { id };
 }

@@ -7,183 +7,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Enums ──────────────────────────────────────────────
-
-enum Role {
-  USER
-  ADMIN
+model Lead {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String?
+  ddd       String?
+  usage     String?
+  createdAt DateTime @default(now())
 }
 
-enum NumberType {
-  ESIM
-  VOIP
-  WHATSAPP
+model Number {
+  id          String   @id @default(uuid())
+  phoneNumber String   @unique
+  ddd         String
+  region      String?
+  type        String
+  status      String
+  monthlyPrice Float
+  setupPrice  Float
+  providerRef String?
+  tenantId    String
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  activatedAt DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
-enum NumberStatus {
-  AVAILABLE
-  RESERVED
-  SOLD
-  SUSPENDED
+model WebhookEvent {
+  id        String @id @default(uuid())
+  webhookId String
+  payload   Json
+  createdAt DateTime @default(now())
 }
 
-enum OrderStatus {
-  PENDING
-  PAID
-  ACTIVE
-  CANCELLED
-  EXPIRED
+model Payment {
+  id           String   @id @default(uuid())
+  orderId      String?
+  amount       Float?
+  method       String?
+  status       String
+  webhookPayload Json?
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
-
-enum PaymentStatus {
-  PENDING
-  CONFIRMED
-  REFUNDED
-  FAILED
-}
-
-enum PaymentMethod {
-  PIX
-  BOLETO
-  CREDIT_CARD
-}
-
-// ─── Models ─────────────────────────────────────────────
 
 model User {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
   password  String
-  document  String   @unique // CPF ou CNPJ
+  document  String   @unique
   phone     String
   whatsapp  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  numbers      Number[]
-  webhooks     Webhook[]
-  phoneNumbers PhoneNumber[]
-  orders       Order[]
-
-  @@map("users")
-}
-
-model Number {
-  id          String   @id @default(uuid())
-  phoneNumber String   @map("phone_number")
-  ddd         String
-  status      String   @default("active") // active, suspended, cancelled
-  userId      String   @map("user_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("numbers")
-}
-
-model PhoneNumber {
-  id             String       @id @default(uuid())
-  phoneNumber    String       @unique @map("phone_number")
-  ddd            String
-  region         String?
-  type           NumberType
-  status         NumberStatus @default(AVAILABLE)
-  monthlyPrice   Decimal      @map("monthly_price") @db.Decimal(10, 2)
-  setupPrice     Decimal      @default(0) @map("setup_price") @db.Decimal(10, 2)
-  providerRef    String?      @map("provider_ref") // referência interna MVNO/fornecedor
-  userId         String?      @map("user_id")
-  activatedAt    DateTime?    @map("activated_at")
-  expiresAt      DateTime?    @map("expires_at")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
-
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-  orders Order[]
-
-  @@index([status])
-  @@index([type])
-  @@index([ddd])
-  @@index([userId])
-  @@map("phone_numbers")
-}
-
-model Order {
-  id              String        @id @default(uuid())
-  userId          String        @map("user_id")
-  phoneNumberId   String        @map("phone_number_id")
-  status          OrderStatus   @default(PENDING)
-  totalAmount     Decimal       @map("total_amount") @db.Decimal(10, 2)
-  paymentMethod   PaymentMethod? @map("payment_method")
-  asaasPaymentId  String?       @map("asaas_payment_id")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  phoneNumber PhoneNumber @relation(fields: [phoneNumberId], references: [id])
-  payments    Payment[]
-
-  @@index([userId])
-  @@index([status])
-  @@index([asaasPaymentId])
-  @@map("orders")
-}
-
-model Payment {
-  id              String        @id @default(uuid())
-  orderId         String        @map("order_id")
-  asaasId         String?       @unique @map("asaas_id")
-  status          PaymentStatus @default(PENDING)
-  amount          Decimal       @db.Decimal(10, 2)
-  method          PaymentMethod?
-  paymentUrl      String?       @map("payment_url")
-  paidAt          DateTime?     @map("paid_at")
-  webhookPayload  Json?         @map("webhook_payload")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@index([orderId])
-  @@index([status])
-  @@map("payments")
-}
-
-model Webhook {
-  id        String   @id @default(uuid())
-  url       String
-  eventType String   @map("event_type") // sms_received, call_received
-  userId    String   @map("user_id")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  events WebhookEvent[]
-
-  @@map("webhooks")
-}
-
-model WebhookEvent {
-  id        String   @id @default(uuid())
-  eventType String   @map("event_type")
-  payload   Json
-  status    String   @default("pending") // pending, delivered, failed
-  webhookId String   @map("webhook_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
-
-  @@map("webhook_events")
-}
-
-model Lead {
-  id        String   @id @default(uuid())
-  name      String
-  email     String
-  ddd       String
-  usage     String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("leads")
+  role      String   @default("USER")
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  phoneNumbers Number[]
 }

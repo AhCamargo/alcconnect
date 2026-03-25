@@ -1,0 +1,1 @@
+{"version":3,"file":"AlcConnect.node.d.ts","sourceRoot":"","sources":["../../../nodes/AlcConnect/AlcConnect.node.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EACV,iBAAiB,EACjB,kBAAkB,EAClB,SAAS,EACT,oBAAoB,EACrB,MAAM,cAAc,CAAC;AAGtB,qBAAa,UAAW,YAAW,SAAS;IAC1C,WAAW,EAAE,oBAAoB,CAmI/B;IAEI,OAAO,CAAC,IAAI,EAAE,iBAAiB,GAAG,OAAO,CAAC,kBAAkB,EAAE,EAAE,CAAC;CA4ExE"}

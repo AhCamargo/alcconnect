@@ -39,6 +39,7 @@ export default function RegisterPage() {
       login(data.token, data.user);
       navigate("/");
     } catch (err: any) {
+      console.error("[RegisterPage] erro ao registrar:", err);
       setError(err.response?.data?.error || "Erro ao criar conta");
     } finally {
       setLoading(false);

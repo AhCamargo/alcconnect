@@ -1,31 +1,31 @@
-FROM node:20-alpine3.21 AS build
+
+FROM node:20.19-alpine AS build
+
+# Permite passar DATABASE_URL no build
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 
 WORKDIR /app
 
-# Instala pnpm e dependências
-RUN corepack enable && corepack prepare pnpm@latest --activate
-COPY pnpm-lock.yaml ./
+# Instala dependências com npm
 COPY apps/api/package.json ./package.json
 COPY apps/api/tsconfig.json ./tsconfig.json
-RUN pnpm install --no-frozen-lockfile
+RUN npm install
 
 # Copia código fonte
 COPY apps/api/prisma ./prisma
 COPY apps/api/src ./src
 
-# Gera Prisma Client e build
-RUN npx prisma generate
-RUN pnpm run build
+# Gera build (pulamos `prisma generate` localmente para evitar incompatibilidades de versão)
+RUN npm run build
 
-FROM node:20-alpine3.21
+FROM node:20.19-alpine
 
 WORKDIR /app
 
-# Instala pnpm e dependências de produção
-RUN corepack enable && corepack prepare pnpm@latest --activate
-COPY pnpm-lock.yaml ./
+# Instala dependências de produção com npm
 COPY apps/api/package.json ./package.json
-RUN pnpm install --prod --no-frozen-lockfile
+RUN npm install --omit=dev
 
 # Copia artefatos de build e Prisma schema
 COPY --from=build /app/dist ./dist
@@ -34,5 +34,8 @@ COPY --from=build /app/prisma ./prisma
 EXPOSE 3000
 
 ENV NODE_ENV=production
+# Garante DATABASE_URL no runtime
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]

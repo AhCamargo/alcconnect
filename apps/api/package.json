@@ -7,24 +7,27 @@
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:generate": "echo 'using typeorm: no-op'",
+    "db:migrate": "echo 'using typeorm: run migrations via typeorm cli'",
+    "db:push": "echo 'using typeorm: db push not applicable'"
   },
   "dependencies": {
-    "@prisma/client": "^6.4.1",
     "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.16",
+    "nodemailer": "^8.0.3",
+    "pg": "^8.11.0",
+    "reflect-metadata": "^0.1.13",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "typeorm": "^0.3.17",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@prisma/client": "4.15.0",
     "@types/axios": "^0.14.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
@@ -34,7 +37,8 @@
     "@types/nodemailer": "^6.4.16",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "prisma": "^6.4.1",
+    "prisma": "4.15.0",
+    "ts-node": "^10.9.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }

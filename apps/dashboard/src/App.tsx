@@ -11,6 +11,7 @@ import MyNumbersPage from "@/pages/MyNumbersPage";
 import WebhooksPage from "@/pages/WebhooksPage";
 import LogsPage from "@/pages/LogsPage";
 import DocsPage from "@/pages/DocsPage";
+import { AdminProtectedRoute } from "./components/AdminProtectedRoute";
 
 export default function App() {
   return (
@@ -32,7 +33,14 @@ export default function App() {
         <Route path="webhooks" element={<WebhooksPage />} />
         <Route path="logs" element={<LogsPage />} />
         <Route path="docs" element={<DocsPage />} />
-        <Route path="admin/numbers" element={<AdminNumbersPage />} />
+        <Route
+          path="admin/numbers"
+          element={
+            <AdminProtectedRoute>
+              <AdminNumbersPage />
+            </AdminProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );

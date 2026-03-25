@@ -5,8 +5,10 @@ import * as authService from "../services/authService";
 import { AppError } from "../errors/AppError";
 
 export async function register(req: AuthRequest, res: Response): Promise<void> {
+  console.log("[REGISTER] payload recebido:", req.body);
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
+    console.log("[REGISTER] erro de validação:", parsed.error.errors);
     res.status(400).json({ error: parsed.error.errors[0].message });
     return;
   }
@@ -15,6 +17,7 @@ export async function register(req: AuthRequest, res: Response): Promise<void> {
     const result = await authService.registerUser(parsed.data);
     res.status(201).json(result);
   } catch (err: unknown) {
+    console.error("[REGISTER] erro interno:", err);
     const status = err instanceof AppError ? err.status : 500;
     const message = err instanceof AppError ? err.message : "Erro interno.";
     res.status(status).json({ error: message });
